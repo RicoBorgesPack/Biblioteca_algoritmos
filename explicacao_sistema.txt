@@ -1,0 +1,217 @@
+SISTEMA DE BIBLIOTECA EM C - EXPLICACAO
+
+ARQUIVOS E EVOLUCAO
+
+biblioteca_v1.c: controla codigos e estoques por vetores paralelos. Usa while
+para cadastrar tres livros, for para listar e buscar e if para validar dados.
+biblioteca_v2.c: acrescenta descricao1, descricao2 e descricao3. Cada string
+corresponde a uma posicao dos vetores, sem matriz e sem struct.
+biblioteca_v3.c: separa cadastro, listagem, busca, soma e disponibilidade em
+funcoes. A main organiza as chamadas e guarda o contador retornado.
+biblioteca_v4.c: substitui vetores paralelos por vetores de structs Livro e
+Usuario. Tem menu de cadastros, listagens e buscas, ainda sem emprestimos.
+biblioteca_v5.c: demonstra ponteiros. Cadastra um livro e um usuario, mostra
+o estado inicial, realiza um emprestimo e uma devolucao e mostra os estados
+apos as chamadas. Informe estoque 2 para observar a sequencia 2, 1, 2.
+biblioteca_v6.c: integra todas as operacoes no menu, com validacoes completas.
+Cada arquivo e independente e deve ser compilado separadamente.
+
+O codigo nao possui comentarios, conforme solicitado. As explicacoes ficam
+neste TXT. Todas as versoes usam leitura auxiliar segura desde o inicio;
+as funcoes das operacoes do acervo sao introduzidas na versao 3.
+
+CONSTANTES
+
+MAX_LIVROS: limite de tres titulos distintos. Nao limita os exemplares.
+MAX_USUARIOS: limite de tres usuarios distintos.
+TAM_TEXTO: 121 posicoes, sendo 120 para texto e uma para o terminador '\0'.
+SEM_EMPRESTIMO: valor -1, que indica usuario sem livro emprestado.
+INT_MIN e INT_MAX: limites do tipo int, fornecidos por limits.h.
+
+TIPOS E CAMPOS
+
+Livro: struct que agrupa codigo, descricao e estoque do mesmo titulo.
+Livro.codigo: inteiro positivo e unico entre os livros.
+Livro.descricao: vetor de caracteres com titulo, autor, ano e tema em uma
+unica linha. Exemplo: O Hobbit; J. R. R. Tolkien; 1937; Fantasia.
+O texto e armazenado inteiro; os campos separados por ponto e virgula nao
+sao analisados individualmente pelo programa.
+Livro.estoque: quantidade de exemplares disponiveis, nunca negativa.
+Usuario: struct que agrupa codigo, dados e codigoLivroEmprestado.
+Usuario.codigo: inteiro positivo e unico entre os usuarios. Livro e usuario
+podem ter o mesmo codigo, pois sao cadastros distintos.
+Usuario.dados: dados pessoais em uma unica string, com espacos permitidos.
+Usuario.codigoLivroEmprestado: codigo do titulo emprestado ou -1.
+
+VARIAVEIS DO ACERVO E CONTROLE
+
+codigos: vetor dos codigos nas versoes 1 a 3.
+estoques: vetor dos estoques nas versoes 1 a 3. O indice de um estoque e
+o mesmo indice do codigo e da descricao correspondentes.
+descricao1, descricao2, descricao3: descricoes das posicoes 0, 1 e 2.
+livros: vetor de structs Livro nas versoes 4 a 6.
+usuarios: vetor de structs Usuario nas versoes 4 a 6.
+qtdLivros: numero de posicoes validas do vetor de livros.
+qtdTitulos: contador equivalente, utilizado na versao 3.
+qtdUsuarios: numero de posicoes validas do vetor de usuarios.
+qtdExemplares: acumulador inicializado com zero para somar os estoques.
+Usa long long para permitir a soma de tres estoques do tipo int sem estouro.
+opcao: numero da operacao escolhida no menu.
+novoCodigo: codigo em validacao nas versoes 1 e 2.
+estoque: quantidade temporaria lida antes de concluir um cadastro.
+repetido: indicador de codigo existente, 1 para repetido e 0 para unico.
+codigoBusca, codigoBuscado: codigo solicitado para uma busca.
+posBusca: indice encontrado nas versoes 1 a 3, ou -1 quando ausente.
+codigo: codigo temporario de cadastro ou consulta.
+indice: posicao devolvida por uma busca no menu.
+codigoLivro, codigoUsuario: codigos informados para emprestar ou devolver.
+indiceLivro, indiceUsuario: posicoes dos registros envolvidos na operacao.
+sucesso: resultado de emprestimo ou devolucao, 1 para sucesso e 0 para falha.
+novoLivro, novoUsuario: structs locais que recebem dados em validacao.
+Somente depois de todas as verificacoes sao copiadas para os vetores.
+descricao: texto temporario usado pelo cadastro da versao 3.
+i: indice local dos lacos for; percorre apenas posicoes ja cadastradas.
+qtd: quantidade de registros que a funcao de busca pode examinar.
+qtdEstoque: estoque recebido pela funcao de disponibilidade.
+livro, usuario: copias das structs nas funcoes mostrarLivro/mostrarUsuario;
+ponteiros para as structs originais nas funcoes que modificam registros.
+valor: novo estoque em alterarEstoque, ou ponteiro de saida em lerInteiro.
+
+VARIAVEIS DAS FUNCOES DE LEITURA
+
+mensagem: texto mostrado antes da leitura.
+texto: vetor de destino de lerTexto.
+linha: vetor local que recebe uma linha inteira por fgets.
+tamanho: quantidade de bytes antes de '\r' ou '\n', com tipo size_t.
+caractere: int usado por getchar para descartar o restante de uma linha
+grande. O tipo int permite representar todos os caracteres e EOF.
+numero: long temporario obtido por strtol antes da conversao para int.
+fim: ponteiro para o primeiro caractere nao convertido por strtol.
+errno: indicador padrao de erro de conversao; ERANGE indica estouro.
+
+FUNCOES DE LEITURA COMUNS A TODAS AS VERSOES
+
+lerInteiro(mensagem, valor): retorna 1 se leu um inteiro valido ou 0 em caso
+de erro ou fim de entrada. Usa fgets e strtol; rejeita letras, fracionarios,
+valores fora de int e linhas excessivas. Grava o resultado em *valor apenas
+quando valido. Aceita espacos antes e depois do numero.
+lerTexto(mensagem, texto): retorna 1 quando recebe texto nao vazio dentro
+do limite, ou 0 em caso de erro. Aceita espacos, remove a quebra de linha
+e rejeita texto formado somente por espacos ou maior que o limite.
+Toda leitura utiliza fgets, portanto nao ha mistura com scanf nem quebra
+de linha numerica pendente. Linhas longas sao descartadas ate '\n' ou EOF.
+Os textos podem conter acentos, preservados conforme a codificacao do
+terminal. Em UTF-8, um caractere acentuado ocupa mais de um byte; o limite
+tecnico destas strings e 120 bytes. Nao ha conversao de codificacao.
+
+FUNCOES DA VERSAO 3
+
+cadastrarTitulo: recebe os vetores, as tres descricoes e o contador. Valida
+os dados, cadastra e devolve contador + 1; em erro devolve o contador antigo.
+listarTitulos: percorre os titulos com for e mostra codigo, estoque e texto.
+buscarTitulo: recebe codigos, quantidade e codigo buscado. Retorna indice
+ou -1, sem imprimir mensagens, para permitir reutilizacao.
+calcularQtdExemplares: percorre o vetor de estoques, soma e retorna o total.
+disponibilidadeTitulo: recebe estoque e retorna 1 se maior que zero, ou 0.
+
+FUNCOES DAS VERSOES 4 A 6
+
+cadastrarLivro: verifica limite, codigo positivo e unico, estoque nao
+negativo e descricao valida. Retorna a nova quantidade ou a quantidade
+anterior quando o cadastro falha.
+cadastrarUsuario: verifica limite, codigo positivo e unico e dados validos.
+Inicializa codigoLivroEmprestado com -1 e retorna a quantidade atualizada.
+buscarLivro: percorre livros[0] ate livros[qtd - 1] e retorna indice ou -1.
+buscarUsuario: realiza a mesma busca no vetor de usuarios.
+mostrarLivro: mostra codigo, descricao, estoque e disponibilidade.
+mostrarUsuario: mostra codigo, dados e codigoLivroEmprestado.
+listarLivros: percorre os livros com for e mostra o total disponivel.
+listarUsuarios: percorre os usuarios com for e mostra seus registros.
+calcularQtdExemplares: soma os estoques das structs; conta somente os
+exemplares disponiveis, sem incluir os exemplares que estao emprestados.
+disponibilidadeTitulo: retorna se o estoque e maior que zero.
+
+FUNCOES COM PONTEIROS NAS VERSOES 5 E 6
+
+alterarEstoque(Livro *livro, int valor): atribui valor a livro->estoque.
+registrarEmprestimo(Usuario *usuario, int codigoLivro): grava o codigo
+em usuario->codigoLivroEmprestado.
+encerrarEmprestimo(Usuario *usuario): grava -1 nesse campo.
+Essas tres funcoes sao auxiliares internas chamadas com enderecos validos
+depois das validacoes das operacoes completas.
+emprestarLivro(Livro *livro, Usuario *usuario): verifica ponteiros, se o
+usuario ja possui emprestimo e se ha estoque. Se valido, diminui o estoque
+em um e registra o livro no usuario. Retorna 1; em falha retorna 0 sem
+modificar nenhum dos dois registros.
+devolverLivro(Livro *livro, Usuario *usuario): verifica ponteiros, emprestimo
+existente, correspondencia do codigo e limite numerico do estoque. Se
+valido, aumenta o estoque em um e libera o usuario. Retorna 1; em falha
+retorna 0 sem modificar nenhum registro.
+main: organiza as operacoes de cada versao. Na versao 6 repete o menu com
+while e seleciona a operacao com switch. A opcao 0 encerra. As buscas
+confirmam os indices antes de acessar vetores ou enviar seus enderecos.
+
+COMO FUNCIONAM OS PONTEIROS
+
+&livros[indiceLivro] fornece o endereco do livro original.
+&usuarios[indiceUsuario] fornece o endereco do usuario original.
+Livro * e Usuario * recebem esses enderecos; -> acessa seus campos.
+Assim, as mudancas continuam visiveis na main apos a funcao terminar.
+&codigo envia o endereco de um inteiro; *valor grava nesse inteiro.
+Nao ha dados do acervo em variaveis globais nem alocacao dinamica.
+Os contadores dos cadastros sao passados por valor; a main deve guardar
+o retorno para atualizar sua propria quantidade.
+
+MENU DA VERSAO FINAL
+
+1: cadastrar livro. Informe codigo, estoque e descricao em uma linha.
+2: cadastrar usuario. Informe codigo e dados pessoais em uma linha.
+3: listar livros e total de exemplares disponiveis.
+4: buscar livro pelo codigo.
+5: emprestar. Informe codigo do livro e depois codigo do usuario.
+6: devolver. Informe codigo do livro e depois codigo do usuario.
+7: listar usuarios e a situacao de emprestimo de cada um.
+8: buscar usuario pelo codigo.
+0: sair.
+Falhas nas operacoes retornam ao menu sem alterar registros.
+Fim da entrada encerra o programa sem entrar em repeticao infinita.
+Os dados ficam somente na memoria e sao descartados ao encerrar.
+
+COMPILACAO
+
+Use um compilador C com suporte a C99 ou posterior. Exemplo com GCC:
+gcc -std=c99 -Wall -Wextra -Wpedantic biblioteca_v6.c -o biblioteca_v6.exe
+Execute no Windows: .\biblioteca_v6.exe
+Para outra versao, troque v6 pelo numero correspondente. Nao compile os
+seis arquivos juntos, pois cada um possui sua propria funcao main.
+
+ROTEIRO DE DEMONSTRACAO
+
+Cadastre livro 101 com estoque 2 e usuario 1. Consulte o usuario: deve
+mostrar -1. Empreste 101 para 1: estoque 1 e emprestimo 101. Tente outro
+emprestimo: deve recusar e manter os valores. Devolva 101 por 1: estoque
+2 e emprestimo -1. Repita a devolucao: deve recusar sem alterar os dados.
+Cadastre livro 205 com estoque 0 e tente empresta-lo: deve recusar.
+Busque codigos inexistentes e tente emprestimos e devolucoes com eles.
+Tente codigo zero, negativo, repetido, estoque negativo e quarto cadastro.
+Informe letras onde se espera um numero e textos com espacos e acentos.
+
+POSSIVEL VERSAO 7
+
+Salvar e carregar livros e usuarios em arquivos para manter os dados apos
+encerrar o programa. Conteudo novo: manipulacao de arquivos com FILE *,
+fopen, fread/fwrite ou leitura textual e fclose. Reutilizaria structs,
+validacoes e operacoes atuais, acrescentando carga inicial e salvamento.
+
+VALIDACAO REALIZADA
+
+As seis versoes foram compiladas com GCC 6.3.0, C99, -Wall, -Wextra,
+-Wpedantic e -Werror, sem erros nem avisos. Foram executadas buscas pelo
+primeiro, ultimo, indisponivel e inexistente nas versoes 1 a 3, consultas
+da versao 4 e a demonstracao de ponteiros da versao 5.
+Na versao 6 foram executados os sete cenarios finais do PDF, testes dos
+limites de tres cadastros, codigos invalidos e repetidos, estoque negativo,
+entrada nao numerica, textos vazios e longos, texto de 120 bytes, acentos
+e fim da entrada. Testes diretos das funcoes confirmaram a preservacao do
+estado nas falhas, devolucao de livro incorreto, esgotamento de estoque,
+emprestimos simultaneos para usuarios diferentes e limite de inteiros.

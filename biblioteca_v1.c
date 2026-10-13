@@ -1,99 +1,133 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 
 #define MAX_LIVROS 3
+#define MAX_USUARIOS 3
+#define TAM_TEXTO 121
+#define SEM_EMPRESTIMO -1
 
-int main() {
+int lerInteiro(const char mensagem[], int *valor);
+int lerTexto(const char mensagem[], char texto[]);
+
+int main(void) {
     int codigos[MAX_LIVROS] = {0};
     int estoques[MAX_LIVROS] = {0};
     int qtdLivros = 0;
-
-    /* Cadastro dos livros */
+    int novoCodigo, estoque, repetido, codigoBusca, posBusca;
+    long long qtdExemplares = 0;
     while (qtdLivros < MAX_LIVROS) {
-        int novoCodigo;
-        int repetido;
-
-        /* Solicita código válido (positivo e não repetido) */
-        do {
-            printf("Digite o codigo do livro %d: ", qtdLivros + 1);
-            scanf("%d", &novoCodigo);
-
-            /* Assume inicialmente que não está repetido */
-            repetido = 0;
-
-            /* Percorre apenas as posições já preenchidas */
-            for (int i = 0; i < qtdLivros; i++) {
-                if (codigos[i] == novoCodigo) {
-                    repetido = 1;
-                    break;
-                }
-            }
-
-            if (novoCodigo <= 0) {
-                printf("Erro: o codigo deve ser um numero positivo.\n");
-            } else if (repetido) {
-                printf("Erro: codigo ja cadastrado. Informe outro codigo.\n");
-            }
-        } while (novoCodigo <= 0 || repetido);
-
-        /* Armazena o código na próxima posição disponível */
+        if (!lerInteiro("Codigo do livro: ", &novoCodigo)) {
+            if (feof(stdin)) return 0;
+            continue;
+        }
+        repetido = 0;
+        for (int i = 0; i < qtdLivros; i++) {
+            if (codigos[i] == novoCodigo) repetido = 1;
+        }
+        if (novoCodigo <= 0 || repetido) {
+            printf("Erro: codigo deve ser positivo e unico.\n");
+            continue;
+        }
+        if (!lerInteiro("Quantidade em estoque: ", &estoque)) {
+            if (feof(stdin)) return 0;
+            continue;
+        }
+        if (estoque < 0) {
+            printf("Erro: estoque nao pode ser negativo.\n");
+            continue;
+        }
         codigos[qtdLivros] = novoCodigo;
-
-        /* Solicita estoque (não permite negativo; zero é permitido) */
-        int estoque;
-        do {
-            printf("Digite a quantidade em estoque do codigo %d: ", novoCodigo);
-            scanf("%d", &estoque);
-
-            if (estoque < 0) {
-                printf("Erro: a quantidade em estoque nao pode ser negativa.\n");
-            }
-        } while (estoque < 0);
-
-        /* Armazena o estoque na mesma posição */
         estoques[qtdLivros] = estoque;
-
-        /* Incrementa somente após cadastro correto */
         qtdLivros++;
-        printf("Livro cadastrado com sucesso!\n\n");
+        printf("Livro cadastrado com sucesso!\n");
     }
-
-    /* Listagem do acervo e cálculo do estoque total */
-    int qtdExemplares = 0;
-
-    printf("===== ACERVO DA BIBLIOTECA =====\n");
+    printf("===== ACERVO =====\n");
     for (int i = 0; i < qtdLivros; i++) {
         printf("Codigo: %d | Estoque: %d\n", codigos[i], estoques[i]);
         qtdExemplares += estoques[i];
     }
-    printf("================================\n");
-    printf("Total de exemplares no acervo: %d\n\n", qtdExemplares);
-
-    /* Busca de um livro */
-    int codigoBusca;
-    printf("Digite o codigo do livro que deseja buscar: ");
-    scanf("%d", &codigoBusca);
-
-    int posBusca = -1; /* -1 significa "não encontrado" */
-
+    printf("Total de exemplares no acervo: %lld\n", qtdExemplares);
+    while (!lerInteiro("Codigo para busca: ", &codigoBusca)) {
+        if (feof(stdin)) return 0;
+    }
+    posBusca = -1;
     for (int i = 0; i < qtdLivros; i++) {
         if (codigos[i] == codigoBusca) {
             posBusca = i;
             break;
         }
     }
-
-    /* Verificação da disponibilidade */
     if (posBusca == -1) {
-        printf("Livro com codigo %d nao existe no acervo.\n", codigoBusca);
+        printf("Livro nao encontrado.\n");
     } else {
-        if (estoques[posBusca] == 0) {
-            printf("Livro com codigo %d encontrado, mas esta temporariamente indisponivel.\n",
-                   codigoBusca);
-        } else {
-            printf("Livro com codigo %d esta disponivel. Quantidade em estoque: %d\n",
-                   codigoBusca, estoques[posBusca]);
+        printf("Codigo: %d | Estoque: %d\n", codigos[posBusca], estoques[posBusca]);
+        printf("%s\n", estoques[posBusca] > 0 ? "Livro disponivel." : "Livro temporariamente indisponivel.");
+    }
+    return 0;
+}
+
+int lerTexto(const char mensagem[], char texto[]) {
+    char linha[TAM_TEXTO + 2];
+    int caractere;
+    size_t tamanho;
+    printf("%s", mensagem);
+    if (fgets(linha, sizeof linha, stdin) == NULL) {
+        return 0;
+    }
+    tamanho = strcspn(linha, "\r\n");
+    if (strchr(linha, '\n') == NULL && !feof(stdin)) {
+        while ((caractere = getchar()) != '\n' && caractere != EOF) {
+        }
+        printf("Erro: informe no maximo 120 caracteres.\n");
+        return 0;
+    }
+    if (tamanho == 0 || tamanho >= TAM_TEXTO) {
+        printf("Erro: informe um texto de 1 a 120 caracteres.\n");
+        return 0;
+    }
+    linha[tamanho] = '\0';
+    for (size_t i = 0; i < tamanho; i++) {
+        if (!isspace((unsigned char) linha[i])) {
+            strcpy(texto, linha);
+            return 1;
         }
     }
-
+    printf("Erro: o texto nao pode conter apenas espacos.\n");
     return 0;
+}
+
+int lerInteiro(const char mensagem[], int *valor) {
+    char linha[TAM_TEXTO];
+    char *fim;
+    long numero;
+    int caractere;
+    printf("%s", mensagem);
+    if (fgets(linha, sizeof linha, stdin) == NULL) {
+        return 0;
+    }
+    if (strchr(linha, '\n') == NULL && !feof(stdin)) {
+        while ((caractere = getchar()) != '\n' && caractere != EOF) {
+        }
+        printf("Erro: entrada numerica muito longa.\n");
+        return 0;
+    }
+    errno = 0;
+    numero = strtol(linha, &fim, 10);
+    if (fim == linha || errno == ERANGE || numero < INT_MIN || numero > INT_MAX) {
+        printf("Erro: informe um numero inteiro valido.\n");
+        return 0;
+    }
+    while (isspace((unsigned char) *fim)) {
+        fim++;
+    }
+    if (*fim != '\0') {
+        printf("Erro: informe somente um numero inteiro.\n");
+        return 0;
+    }
+    *valor = (int) numero;
+    return 1;
 }
