@@ -5,62 +5,53 @@
 #include <errno.h>
 #include <limits.h>
 
-#define MAX_LIVROS 3
-#define MAX_USUARIOS 3
-#define TAM_TEXTO 121
+#define MAX_ 3
+#define MAX_USER 3
+#define TAM 121
 #define SEM_EMPRESTIMO -1
 
-int lerInteiro(const char mensagem[], int *valor);
-int lerTexto(const char mensagem[], char texto[]);
+int lerInt(const char mensagem[], int *valor);
+int lerTxt(const char mensagem[], char texto[]);
 
 int main(void) {
-    int codigos[MAX_LIVROS] = {0};
-    int estoques[MAX_LIVROS] = {0};
-    int qtdLivros = 0;
+    int codigos[MAX] = {0};
+    int estoques[MAX] = {0};
+    int qtd = 0;
     int novoCodigo, estoque, repetido, codigoBusca, posBusca;
-    long long qtdExemplares = 0;
-    char descricao1[TAM_TEXTO] = "";
-    char descricao2[TAM_TEXTO] = "";
-    char descricao3[TAM_TEXTO] = "";
-    while (qtdLivros < MAX_LIVROS) {
-        if (!lerInteiro("Codigo do livro: ", &novoCodigo)) {
+    long long qtdExemp = 0;
+    while (qtd < MAX) {
+        if (!lerInt("Codigo do livro: ", &novoCodigo)) {
             if (feof(stdin)) return 0;
             continue;
         }
         repetido = 0;
-        for (int i = 0; i < qtdLivros; i++) {
+        for (int i = 0; i < qtd; i++) {
             if (codigos[i] == novoCodigo) repetido = 1;
         }
         if (novoCodigo <= 0 || repetido) {
-            printf("Erro: codigo deve ser positivo e unico.\n");
+            printf("Erro: codigo tem que ser positivo e unico.\n");
             continue;
         }
-        if (!lerInteiro("Quantidade em estoque: ", &estoque)) {
+        if (!lerInt("Quantidade no estoque: ", &estoque)) {
             if (feof(stdin)) return 0;
             continue;
         }
         if (estoque < 0) {
-            printf("Erro: estoque nao pode ser negativo.\n");
+            printf("Erro: nao pode haver estoque com numero negativo.\n");
             continue;
         }
-        if (!lerTexto("Titulo; autor; ano; tema: ",
-                      qtdLivros == 0 ? descricao1 : qtdLivros == 1 ? descricao2 : descricao3)) {
-            if (feof(stdin)) return 0;
-            continue;
-        }
-        codigos[qtdLivros] = novoCodigo;
-        estoques[qtdLivros] = estoque;
-        qtdLivros++;
-        printf("Livro cadastrado com sucesso!\n");
+        codigos[qtd] = novoCodigo;
+        estoques[qtd] = estoque;
+        qtd++;
+        printf("Livro cadastrado!\n");
     }
-    printf("===== ACERVO =====\n");
-    for (int i = 0; i < qtdLivros; i++) {
+    printf("===== Biblioteca =====\n");
+    for (int i = 0; i < qtd; i++) {
         printf("Codigo: %d | Estoque: %d\n", codigos[i], estoques[i]);
-        printf("Descricao: %s\n", i == 0 ? descricao1 : i == 1 ? descricao2 : descricao3);
         qtdExemplares += estoques[i];
     }
-    printf("Total de exemplares no acervo: %lld\n", qtdExemplares);
-    while (!lerInteiro("Codigo para busca: ", &codigoBusca)) {
+    printf("Total de exemplares na biblioteca: %lld\n", qtdExemp);
+    while (!lerInt("Codigo: ", &codigoBusca)) {
         if (feof(stdin)) return 0;
     }
     posBusca = -1;
@@ -71,17 +62,16 @@ int main(void) {
         }
     }
     if (posBusca == -1) {
-        printf("Livro nao encontrado.\n");
+        printf("Livro nao existente no estoque.\n");
     } else {
         printf("Codigo: %d | Estoque: %d\n", codigos[posBusca], estoques[posBusca]);
-        printf("Descricao: %s\n", posBusca == 0 ? descricao1 : posBusca == 1 ? descricao2 : descricao3);
         printf("%s\n", estoques[posBusca] > 0 ? "Livro disponivel." : "Livro temporariamente indisponivel.");
     }
     return 0;
 }
 
-int lerTexto(const char mensagem[], char texto[]) {
-    char linha[TAM_TEXTO + 2];
+int lerTxt(const char mensagem[], char texto[]) {
+    char linha[TAM + 2];
     int caractere;
     size_t tamanho;
     printf("%s", mensagem);
@@ -92,11 +82,11 @@ int lerTexto(const char mensagem[], char texto[]) {
     if (strchr(linha, '\n') == NULL && !feof(stdin)) {
         while ((caractere = getchar()) != '\n' && caractere != EOF) {
         }
-        printf("Erro: informe no maximo 120 caracteres.\n");
+        printf("Erro: informe ate 120 caracteres.\n");
         return 0;
     }
-    if (tamanho == 0 || tamanho >= TAM_TEXTO) {
-        printf("Erro: informe um texto de 1 a 120 caracteres.\n");
+    if (tamanho == 0 || tamanho >= TAM) {
+        printf("Erro: informe um texto de um a 120 caracteres.\n");
         return 0;
     }
     linha[tamanho] = '\0';
@@ -110,8 +100,8 @@ int lerTexto(const char mensagem[], char texto[]) {
     return 0;
 }
 
-int lerInteiro(const char mensagem[], int *valor) {
-    char linha[TAM_TEXTO];
+int lerInt(const char mensagem[], int *valor) {
+    char linha[TAM];
     char *fim;
     long numero;
     int caractere;

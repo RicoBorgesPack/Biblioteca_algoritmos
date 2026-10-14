@@ -5,9 +5,9 @@
 #include <errno.h>
 #include <limits.h>
 
-#define MAX_LIVROS 3
-#define MAX_USUARIOS 3
-#define TAM_TEXTO 121
+#define MAX 3
+#define MAX_USERS 3
+#define TAMANHO 121
 #define SEM_EMPRESTIMO -1
 
 int lerInteiro(const char mensagem[], int *valor);
@@ -15,31 +15,31 @@ int lerTexto(const char mensagem[], char texto[]);
 
 typedef struct {
     int codigo;
-    char descricao[TAM_TEXTO];
+    char descricao[TAMANHO];
     int estoque;
 } Livro;
 
 typedef struct {
     int codigo;
-    char dados[TAM_TEXTO];
+    char dados[TAMANHO];
     int codigoLivroEmprestado;
 } Usuario;
 
-int cadastrarLivro(Livro livros[], int qtdLivros);
+int cadastrarLivro(Livro livros[], int qtd);
 int cadastrarUsuario(Usuario usuarios[], int qtdUsuarios);
-void listarLivros(Livro livros[], int qtdLivros);
+void listarLivros(Livro livros[], int qtd);
 void listarUsuarios(Usuario usuarios[], int qtdUsuarios);
 int buscarLivro(Livro livros[], int qtd, int codigo);
 int buscarUsuario(Usuario usuarios[], int qtd, int codigo);
-long long calcularQtdExemplares(Livro livros[], int qtdLivros);
+long long calcularQtdExemplares(Livro livros[], int qtd);
 int disponibilidadeTitulo(int qtdEstoque);
 void mostrarLivro(Livro livro);
 void mostrarUsuario(Usuario usuario);
 
 int main(void) {
-    Livro livros[MAX_LIVROS] = {{0}};
-    Usuario usuarios[MAX_USUARIOS] = {{0}};
-    int qtdLivros = 0, qtdUsuarios = 0;
+    Livro livros[MAX] = {{0}};
+    Usuario usuarios[MAX_USERS] = {{0}};
+    int qtd = 0, qtdUsuarios = 0;
     int opcao, codigo, indice;
     printf("Sistema de Biblioteca - Versao 4\n");
     while (1) {
@@ -52,17 +52,17 @@ int main(void) {
         if (opcao == 0) break;
         switch (opcao) {
             case 1:
-                qtdLivros = cadastrarLivro(livros, qtdLivros);
+                qtd = cadastrarLivro(livros, qtd);
                 break;
             case 2:
                 qtdUsuarios = cadastrarUsuario(usuarios, qtdUsuarios);
                 break;
             case 3:
-                listarLivros(livros, qtdLivros);
+                listarLivros(livros, qtd);
                 break;
             case 4:
                 if (!lerInteiro("Codigo do livro: ", &codigo)) break;
-                indice = buscarLivro(livros, qtdLivros, codigo);
+                indice = buscarLivro(livros, qtd, codigo);
                 if (indice == -1) printf("Livro nao encontrado.\n");
                 else mostrarLivro(livros[indice]);
                 break;
@@ -98,31 +98,31 @@ int buscarUsuario(Usuario usuarios[], int qtd, int codigo) {
     return -1;
 }
 
-int cadastrarLivro(Livro livros[], int qtdLivros) {
+int cadastrarLivro(Livro livros[], int qtd) {
     Livro novoLivro;
-    if (qtdLivros >= MAX_LIVROS) {
+    if (qtd >= MAX) {
         printf("Erro: limite de tres livros atingido.\n");
-        return qtdLivros;
+        return qtd;
     }
-    if (!lerInteiro("Codigo do livro: ", &novoLivro.codigo)) return qtdLivros;
-    if (novoLivro.codigo <= 0 || buscarLivro(livros, qtdLivros, novoLivro.codigo) != -1) {
+    if (!lerInteiro("Codigo do livro: ", &novoLivro.codigo)) return qtd;
+    if (novoLivro.codigo <= 0 || buscarLivro(livros, qtd, novoLivro.codigo) != -1) {
         printf("Erro: codigo de livro deve ser positivo e unico.\n");
-        return qtdLivros;
+        return qtd;
     }
-    if (!lerInteiro("Quantidade em estoque: ", &novoLivro.estoque)) return qtdLivros;
+    if (!lerInteiro("Quantidade em estoque: ", &novoLivro.estoque)) return qtd;
     if (novoLivro.estoque < 0) {
         printf("Erro: estoque nao pode ser negativo.\n");
-        return qtdLivros;
+        return qtd;
     }
-    if (!lerTexto("Titulo; autor; ano; tema: ", novoLivro.descricao)) return qtdLivros;
-    livros[qtdLivros] = novoLivro;
+    if (!lerTexto("Titulo; autor; ano; tema: ", novoLivro.descricao)) return qtd;
+    livros[qtd] = novoLivro;
     printf("Livro cadastrado com sucesso!\n");
-    return qtdLivros + 1;
+    return qtd + 1;
 }
 
 int cadastrarUsuario(Usuario usuarios[], int qtdUsuarios) {
     Usuario novoUsuario;
-    if (qtdUsuarios >= MAX_USUARIOS) {
+    if (qtdUsuarios >= MAX_USERS) {
         printf("Erro: limite de tres usuarios atingido.\n");
         return qtdUsuarios;
     }
@@ -147,10 +147,10 @@ void mostrarUsuario(Usuario usuario) {
     printf("Usuario: %d | Dados: %s | Livro emprestado: %d\n", usuario.codigo, usuario.dados, usuario.codigoLivroEmprestado);
 }
 
-void listarLivros(Livro livros[], int qtdLivros) {
-    if (qtdLivros == 0) printf("Nenhum livro cadastrado.\n");
-    for (int i = 0; i < qtdLivros; i++) mostrarLivro(livros[i]);
-    printf("Total de exemplares disponiveis: %lld\n", calcularQtdExemplares(livros, qtdLivros));
+void listarLivros(Livro livros[], int qtd) {
+    if (qtd == 0) printf("Nenhum livro cadastrado.\n");
+    for (int i = 0; i < qtd; i++) mostrarLivro(livros[i]);
+    printf("Total de exemplares disponiveis: %lld\n", calcularQtdExemplares(livros, qtd));
 }
 
 void listarUsuarios(Usuario usuarios[], int qtdUsuarios) {
@@ -158,9 +158,9 @@ void listarUsuarios(Usuario usuarios[], int qtdUsuarios) {
     for (int i = 0; i < qtdUsuarios; i++) mostrarUsuario(usuarios[i]);
 }
 
-long long calcularQtdExemplares(Livro livros[], int qtdLivros) {
+long long calcularQtdExemplares(Livro livros[], int qtd) {
     long long qtdExemplares = 0;
-    for (int i = 0; i < qtdLivros; i++) qtdExemplares += livros[i].estoque;
+    for (int i = 0; i < qtd; i++) qtdExemplares += livros[i].estoque;
     return qtdExemplares;
 }
 
@@ -169,7 +169,7 @@ int disponibilidadeTitulo(int qtdEstoque) {
 }
 
 int lerTexto(const char mensagem[], char texto[]) {
-    char linha[TAM_TEXTO + 2];
+    char linha[TAMANHO + 2];
     int caractere;
     size_t tamanho;
     printf("%s", mensagem);
@@ -183,7 +183,7 @@ int lerTexto(const char mensagem[], char texto[]) {
         printf("Erro: informe no maximo 120 caracteres.\n");
         return 0;
     }
-    if (tamanho == 0 || tamanho >= TAM_TEXTO) {
+    if (tamanho == 0 || tamanho >= TAMANHO) {
         printf("Erro: informe um texto de 1 a 120 caracteres.\n");
         return 0;
     }
@@ -199,7 +199,7 @@ int lerTexto(const char mensagem[], char texto[]) {
 }
 
 int lerInteiro(const char mensagem[], int *valor) {
-    char linha[TAM_TEXTO];
+    char linha[TAMANHO];
     char *fim;
     long numero;
     int caractere;
